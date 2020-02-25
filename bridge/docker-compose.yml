@@ -1,0 +1,12 @@
+version: '3'
+services:
+  nginx:
+    build: .
+    env_file: .env
+    restart: always
+    privileged: false
+    ports:
+     - "${BRIDGE_OCSERV_PORT}:4433/tcp"
+     - "${BRIDGE_OCSERV_PORT}:4433/udp"
+     - "${BRIDGE_OVPN_PORT}:1194/tcp"
+

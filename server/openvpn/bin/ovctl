@@ -1,0 +1,119 @@
+#!/bin/bash
+
+OPENVPNDIR=/etc/openvpn
+EASYRSADIR=$OPENVPNDIR/easyrsa
+KEYDIR=$EASYRSADIR/keys
+CLIENTCONF=$OPENVPNDIR/client.conf
+
+
+function list() {
+    # print list of clients 
+    cd /etc/openvpn/easyrsa/keys/
+    CLIENTLIST=`ls -1 *.crt | grep -v '^server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
+    echo "$CLIENTLIST"
+
+    cd /
+}
+
+function getclient() {
+    # Print cleint config
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+        cat << _EOF_
+# Openvpn client config
+`cat $CLIENTCONF`
+
+# CA server certificate
+<ca>
+`cat $KEYDIR/ca.crt`
+</ca>
+
+<cert>
+`cat $KEYDIR/$CLIENTNAME.crt`
+</cert>
+
+<key>
+`cat $KEYDIR/$CLIENTNAME.key`
+</key>
+_EOF_
+        return 1
+    fi
+}
+
+
+function create() {
+    # Create new client certificate and config
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+        echo "client certificate already exists"
+        echo "use 'ovctl getclient $CLIENTNAME' to retrive it configuration"
+        return 1
+    fi
+    cd $EASYRSADIR
+    . vars > /dev/null
+    ./pkitool  &> /dev/null  $CLIENTNAME
+    echo "use this command to retrive it's configuration:"
+    echo "ovctl getclient $CLIENTNAME"
+}
+
+function revoke() { 
+    # revoke the client certificate
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+        cd $EASYRSADIR
+        . vars > /dev/null
+        ./revoke-full  $CLIENTNAME
+        echo "certificate revoked"
+    else
+        echo "there is no client certificate with name $CLIENTNAME"
+    fi
+}
+
+function usage() { 
+    # Help 
+    echo "Create, list, and print config file"
+    echo ""
+    echo "sub commands: "
+    echo "    list                    print list of existing client certificates"
+    echo "    create CLIENTNAME       create new client certificate and print client configuration file"
+    echo "    getclient CLIENTNAME    print existing client configuration file"
+    echo "    revoke CLIENTNAME       revoke client certificate"
+    echo "    help                    print this message"
+
+}
+
+function main() {
+    case "$1" in
+        list)
+        shift
+        list $@
+        ;;
+        create)
+        shift
+        create $@
+        ;;
+        getclient)
+        shift
+        getclient $@
+        ;;
+        revoke)
+        shift
+        revoke $@
+        ;;
+        -h|--help|help)
+        usage 
+        exit 0
+        ;; 
+        *)    # unknown option
+        echo "Unknown option $!"
+        usage
+        exit 1
+        ;;
+    esac
+
+}
+
+main "$@"

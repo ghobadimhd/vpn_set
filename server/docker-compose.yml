@@ -1,0 +1,51 @@
+version: '3'
+services:
+  openvpn:
+    build: openvpn/
+    env_file: 
+      - '.env'
+    restart: always
+    privileged: true
+    ports:
+     - "${OVPN_PORT}:1194/udp"
+    networks: 
+      - vpn
+    volumes:
+      - openvpn:/etc/openvpn/
+
+  nginx:
+    build: nginx/
+    env_file: 
+      - '../vpn.env'
+    restart: always
+    privileged: false
+    ports:
+     - "${OVPN_PORT}:1194/tcp"
+    networks: 
+      - vpn
+    volumes:
+      - openvpn:/etc/openvpn/
+
+  ocserv:
+    build: ocserv/
+    env_file: 
+      - '../vpn.env'
+    restart: always
+    privileged: true
+    ports:
+     - "${OCSERV_PORT}:443/tcp"
+     - "${OCSERV_PORT}:443/udp"
+    networks: 
+      - vpn
+    volumes:
+      - ocserv:/etc/ocserv/
+
+networks:
+  vpn:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.1.0/24
+volumes:
+  openvpn:
+  ocserv:
