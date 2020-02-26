@@ -1,0 +1,33 @@
+project_dir: /opt/vpn
+
+packages:
+  - docker.io
+  - python3-pip
+  - python3-setuptools
+  - python-setuptools
+
+
+server_address: "{{ hostvars['server']['ansible_facts']['default_ipv4']['address'] }}"
+# http_port: 8080
+# ovpn_port: 4434
+# ovpn_protocol: tcp
+# ocserv_port: 4433
+
+bridge_address: "{{ hostvars['bridge']['ansible_facts']['default_ipv4']['address'] }}"
+# bridge_http_port: 8080
+# bridge_ovpn_port: 4434
+# bridge_ocserv_port: 4433
+# # adming password
+# admin_password: 123
+
+# ### openvpn monitor config ###
+# openvpnmonitor_default_datetimeformat: "%%d/%%m/%%y"
+# openvpnmonitor_default_latitude: -37
+# openvpnmonitor_default_logo: logo.jpg
+# openvpnmonitor_default_longitude: 144
+# openvpnmonitor_default_maps: true
+# openvpnmonitor_default_site: test
+# openvpnmonitor_sites_0_alias: tcp
+# openvpnmonitor_sites_0_host: openvpn
+# openvpnmonitor_sites_0_name: openvpn
+# openvpnmonitor_sites_0_port: 5555

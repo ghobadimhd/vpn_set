@@ -1,0 +1,53 @@
+---
+
+- hosts: vpn_servers
+  vars_files: vars/vars.yml
+  tasks:
+    - name: install dependencies
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+        state: present
+        name: "{{ packages }}"
+
+    - name: install python dependencies
+      pip:
+        state: present
+        name: 
+          - wheel
+          - docker-compose
+          - docker
+
+    - name: create project direcory
+      file:
+        name: "{{ project_dir }}"
+        state: directory
+
+    - name: copy compose files
+      copy:
+        src: "../{{ inventory_hostname }}"
+        dest: "{{ project_dir }}"
+      notify: rebuild
+
+    - name: create vpn.env file
+      template:
+        src: vpn.env.jinja2
+        dest: "{{ project_dir }}/vpn.env"
+      notify: rebuild
+
+    - name: start service
+      docker_compose:
+        project_src: "{{ project_dir }}/{{ inventory_hostname }}"
+        state: present
+
+  handlers:
+    - name: rebuild
+      docker_compose:
+        project_src: "{{ project_dir }}/{{ inventory_hostname }}"
+        build: yes
+        state: present
+    - name: rebuild
+      docker_compose:
+        project_src: "{{ project_dir }}/{{ inventory_hostname }}"
+        state: restarted
+

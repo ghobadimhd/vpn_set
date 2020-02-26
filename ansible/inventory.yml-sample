@@ -1,0 +1,40 @@
+---
+
+all:
+  hosts:
+    server:
+      ansible_host: 1.1.1.1
+    bridge:
+      ansible_host: 2.2.2.2
+  children:
+    vpn_servers:
+      hosts:
+        server:
+        bridge:
+      vars:
+        ansible_user: ubuntu
+        ansible_become: true
+        ansible_python_interpreter: /usr/bin/python3
+        http_port: 8080
+        ovpn_port: 4434
+        ovpn_protocol: tcp
+        ocserv_port: 4433
+        bridge_http_port: 8080
+        bridge_ovpn_port: 4434
+        bridge_ocserv_port: 4433
+        # adming password
+        admin_password: 123
+
+        ### openvpn monitor config ###
+        openvpnmonitor_default_datetimeformat: "%%d/%%m/%%y"
+        openvpnmonitor_default_latitude: -37
+        openvpnmonitor_default_logo: logo.jpg
+        openvpnmonitor_default_longitude: 144
+        openvpnmonitor_default_maps: "True"
+        openvpnmonitor_default_site: test
+        openvpnmonitor_sites_0_alias: tcp
+        openvpnmonitor_sites_0_host: openvpn
+        openvpnmonitor_sites_0_name: openvpn
+        openvpnmonitor_sites_0_port: 5555
+
+
