@@ -12,6 +12,7 @@ _EOF_
 
 # Create Server Config
 cat << _EOF_ > /etc/openvpn/openvpn.conf
+management 0.0.0.0 5555
 `echo proto $OVPN_PROTOCOL `
 `echo port 1194`
 `cat /etc/openvpn/openvpn.conf.tpl`

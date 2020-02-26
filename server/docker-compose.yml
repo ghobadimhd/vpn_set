@@ -21,6 +21,7 @@ services:
     privileged: false
     ports:
      - "${OVPN_PORT}:1194/tcp"
+     - "${HTTP_PORT}:80/tcp"
     networks: 
       - vpn
     volumes:
@@ -39,6 +40,16 @@ services:
       - vpn
     volumes:
       - ocserv:/etc/ocserv/
+
+  ovpnmon:
+    image: ruimarinho/openvpn-monitor
+    env_file: 
+      - '../vpn.env'
+    restart: always
+    privileged: false
+    networks: 
+      - vpn
+
 
 networks:
   vpn:

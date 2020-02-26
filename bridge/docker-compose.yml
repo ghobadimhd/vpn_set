@@ -9,4 +9,5 @@ services:
      - "${BRIDGE_OCSERV_PORT}:4433/tcp"
      - "${BRIDGE_OCSERV_PORT}:4433/udp"
      - "${BRIDGE_OVPN_PORT}:1194/tcp"
+     - "${BRIDGE_HTTP_PORT}:80/tcp"
 
