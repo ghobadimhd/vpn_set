@@ -15,7 +15,7 @@ function list() {
     cd /
 }
 
-function getclient() {
+function getprofile() {
     # Print cleint config
     CLIENTNAME=$1
     CLIENTLIST=`list`
@@ -37,25 +37,73 @@ function getclient() {
 `cat $KEYDIR/$CLIENTNAME.key`
 </key>
 _EOF_
-        return 1
+        return 0
     fi
 }
 
 
-function create() {
+function getcert() {
+    # Print cleint config
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
+    then
+       
+        echo "# $CLIENTNAME Certificate"
+        cat $KEYDIR/$CLIENTNAME.crt
+
+        return 0
+    fi
+}
+
+function getkey() {
+    # Print cleint config
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
+    then
+        echo "# $CLIENTNAME Private Key"
+        cat $KEYDIR/$CLIENTNAME.key
+
+        return 0
+    fi
+}
+
+function addprofile() {
     # Create new client certificate and config
     CLIENTNAME=$1
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
         echo "client certificate already exists"
-        echo "use 'ovctl getclient $CLIENTNAME' to retrive it configuration"
+        echo "use 'ovctl getprofile $CLIENTNAME' to retrive it configuration"
         return 1
     fi
     cd $EASYRSADIR
     . vars > /dev/null
     ./pkitool  &> /dev/null  $CLIENTNAME
     echo "use this command to retrive it's configuration:"
-    echo "ovctl getclient $CLIENTNAME"
+    echo "ovctl getprofile $CLIENTNAME"
+}
+
+function addprofile_bulk() {
+    PREFIX=$1
+    COUNT=$2
+    CLIENTLIST=`list`
+    if [ "$COUNT" == "" ] ; then  COUNT=0 ; fi
+    if [ "$PREFIX" == "" ] ; then  echo "prefix missing\n"; usage ; return 1 ; fi
+    cd $EASYRSADIR
+    . vars > /dev/null
+    for i in `seq 1 $COUNT` ; do
+        CLIENTNAME=$PREFIX$i
+        if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+            echo "client $CLIENTNAME certificate already exists"
+        else
+            ./pkitool  &> /dev/null  $CLIENTNAME
+            echo "$CLIENTNAME"
+        fi
+    done
+    echo "use this command to retrive it's configuration:"
+    echo "ovctl getprofile CLIENTNAME"
 }
 
 function revoke() { 
@@ -74,14 +122,17 @@ function revoke() {
 
 function usage() { 
     # Help 
-    echo "Create, list, and print config file"
+    echo "addprofile, list, and print config file"
     echo ""
     echo "sub commands: "
-    echo "    list                    print list of existing client certificates"
-    echo "    create CLIENTNAME       create new client certificate and print client configuration file"
-    echo "    getclient CLIENTNAME    print existing client configuration file"
-    echo "    revoke CLIENTNAME       revoke client certificate"
-    echo "    help                    print this message"
+    echo "    list                       print list of existing client certificates"
+    echo "    addprofile CLIENTNAME         create new client certificate "
+    echo "    addprofile_bulk PREFIX COUNT  create multiple client certificate"
+    echo "    getprofile CLIENTNAME      print existing client profile"
+    echo "    getcert CLIENTNAME         print existing client certificate"
+    echo "    getkey CLIENTNAME          print existing client private key"
+    echo "    revoke CLIENTNAME          revoke client certificate"
+    echo "    help                       print this message"
 
 }
 
@@ -91,13 +142,25 @@ function main() {
         shift
         list $@
         ;;
-        create)
+        addprofile)
         shift
-        create $@
+        addprofile $@
         ;;
-        getclient)
+        addprofile_bulk)
         shift
-        getclient $@
+        addprofile_bulk $@
+        ;;
+        getprofile)
+        shift
+        getprofile $@
+        ;;
+        getcert)
+        shift
+        getcert $@
+        ;;
+        getkey)
+        shift
+        getkey $@
         ;;
         revoke)
         shift
