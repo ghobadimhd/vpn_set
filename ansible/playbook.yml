@@ -27,6 +27,7 @@
       copy:
         src: "../{{ inventory_hostname }}"
         dest: "{{ project_dir }}"
+        local_follow: no
       notify: rebuild
 
     - name: create vpn.env file
