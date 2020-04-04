@@ -2,8 +2,6 @@ version: '3'
 services:
   openvpn:
     build: openvpn/
-    env_file:
-      - '.env'
     restart: always
     privileged: true
     ports:
@@ -15,8 +13,6 @@ services:
 
   nginx:
     build: nginx/
-    env_file:
-      - '../vpn.env'
     restart: always
     privileged: false
     ports:
@@ -29,8 +25,6 @@ services:
 
   ocserv:
     build: ocserv/
-    env_file:
-      - '../vpn.env'
     restart: always
     privileged: true
     ports:
