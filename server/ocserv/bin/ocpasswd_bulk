@@ -1,0 +1,78 @@
+#!/bin/bash
+
+OCPASSWD_DB=/etc/ocserv/ocpasswd
+
+function usage() { 
+    # Help 
+    echo "adduser"
+    echo ""
+    echo "sub commands: "
+    echo "    adduser [-f] PREFIX COUNT      print list of existing client certificates"
+
+}
+
+function main() {
+    case "$1" in
+        adduser)
+        shift
+        adduser $@
+        ;;
+        -h|--help|help)
+        usage 
+        exit 0
+        ;; 
+        *)    # unknown option
+        echo "Unknown option $!"
+        usage
+        exit 1
+        ;;
+    esac
+
+}
+
+function adduser() {
+
+    FORCE=false
+    PARAMS=""
+    while (( "$#" )); do
+    case "$1" in
+        -f|--force)
+        FORCE=true
+        shift 1
+        ;;
+        -*|--*=) # unsupported flags
+        echo "Error: Unsupported flag $1" >&2
+        exit 1
+        ;;
+        *) # preserve positional arguments
+        PARAMS="$PARAMS $1"
+        shift
+        ;;
+    esac
+    done
+
+    set -- $PARAMS
+
+    USER_PREFIX=$1
+    COUNT=${2:= 0}
+    PASSWORD_PREFIX=${3:= $USER_PREFIX}
+
+    if [ "$USER_PREFIX" == "" ] ; then
+        >2& echo "prefix missing\n"
+        usage
+        return 1
+    fi
+
+    for i in `seq 1 $COUNT` ; do
+        USERNAME=$USER_PREFIX$i
+        if ! $FORCE  && [ "`grep -c $USERNAME $OCPASSWD_DB`" != '0' ]  ; then
+            echo "$USERNAME already exists!"
+        else
+            PASSWORD=$PASSWORD_PREFIX$(( $RANDOM % 100000 + 100000 ))
+            echo "$USERNAME: $PASSWORD"
+            echo -en "$PASSWORD\n$PASSWORD\n" | ocpasswd $USERNAME
+        fi
+    done
+}
+
+main "$@"
