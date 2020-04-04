@@ -2,57 +2,56 @@ version: '3'
 services:
   openvpn:
     build: openvpn/
-    env_file: 
+    env_file:
       - '.env'
     restart: always
     privileged: true
     ports:
      - "${OVPN_PORT}:1194/udp"
-    networks: 
+    networks:
       - vpn
     volumes:
-      - openvpn:/etc/openvpn/
+      - vpnset:/etc/vpn-set/
 
   nginx:
     build: nginx/
-    env_file: 
+    env_file:
       - '../vpn.env'
     restart: always
     privileged: false
     ports:
      - "${OVPN_PORT}:1194/tcp"
      - "${HTTP_PORT}:80/tcp"
-    networks: 
+    networks:
       - vpn
     volumes:
-      - openvpn:/etc/openvpn/
+      - vpnset:/etc/vpn-set/
 
   ocserv:
     build: ocserv/
-    env_file: 
+    env_file:
       - '../vpn.env'
     restart: always
     privileged: true
     ports:
      - "${OCSERV_PORT}:443/tcp"
      - "${OCSERV_PORT}:443/udp"
-    networks: 
+    networks:
       - vpn
     volumes:
-      - ocserv:/etc/ocserv/
+      - vpnset:/etc/vpn-set/
 
   ovpnmon:
     image: ruimarinho/openvpn-monitor
-    env_file: 
+    env_file:
       - '../vpn.env'
     restart: always
     privileged: false
-    networks: 
+    networks:
       - vpn
 
 
 networks:
   vpn:
 volumes:
-  openvpn:
-  ocserv:
+  vpnset:

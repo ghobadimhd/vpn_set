@@ -1,12 +1,19 @@
 #!/bin/bash
 
+VPNSET_DIR=/etc/vpn-set
+NGINX_DATA_DIR=$VPNSET_DIR/nginx
 
 if [ `grep -c stream.conf /etc/nginx/nginx.conf` == '0' ] ; then
     echo 'include /etc/nginx/stream.conf;' >> /etc/nginx/nginx.conf
 fi
 
-if ! [ -e /etc/ssl/cert.pem ] ; then
-        openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/key.pem -out /etc/ssl/cert.pem -nodes -subj '/CN=mydom.com/O=My Company Name LTD./C=US';
+# Creating base data directory
+if ! [ -d /etc/vpn-set/nginx ] ; then
+    mkdir -p /etc/vpn-set/nginx
+fi
+
+if ! [ -e $NGINX_DATA_DIR/cert.pem ] ; then
+        openssl req -x509 -newkey rsa:4096 -keyout $NGINX_DATA_DIR/key.pem -out $NGINX_DATA_DIR/cert.pem -nodes -subj '/CN=mydom.com/O=My Company Name LTD./C=US';
 fi 
 
 
@@ -16,15 +23,16 @@ stream {
     server {
         listen 1194 ssl; 
         proxy_pass openvpn:1194;
-	    ssl_certificate     /etc/ssl/cert.pem;
-        ssl_certificate_key /etc/ssl/key.pem;
+	    ssl_certificate     $NGINX_DATA_DIR/cert.pem;
+        ssl_certificate_key $NGINX_DATA_DIR/key.pem;
     }
 }
 
 
 _EOF_
 
-htpasswd -bc /etc/nginx/admin.htpasswd admin $ADMIN_PASSWORD
+htpasswd -bc $NGINX_DATA_DIR/admin.htpasswd admin $ADMIN_PASSWORD
+
 cat << _EOF_ > /etc/nginx/conf.d/default.conf
 
 server {
@@ -39,10 +47,10 @@ server {
     access_log  /var/log/nginx/host.access.log  main;
 
     auth_basic "Administrator’s Area";
-    auth_basic_user_file /etc/nginx/admin.htpasswd;
+    auth_basic_user_file $NGINX_DATA_DIR/admin.htpasswd;
 
-    ssl_certificate     /etc/ssl/cert.pem;
-    ssl_certificate_key /etc/ssl/key.pem;
+    ssl_certificate     $NGINX_DATA_DIR/cert.pem;
+    ssl_certificate_key $NGINX_DATA_DIR/key.pem;
 
     location /ovpn/ {
         proxy_pass http://ovpnmon/;

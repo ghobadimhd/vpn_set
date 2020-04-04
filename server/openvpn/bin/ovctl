@@ -1,14 +1,14 @@
 #!/bin/bash
 
 OPENVPNDIR=/etc/openvpn
-EASYRSADIR=$OPENVPNDIR/easyrsa
+EASYRSADIR=/etc/vpn-set/openvpn/easyrsa
 KEYDIR=$EASYRSADIR/keys
 CLIENTCONF=$OPENVPNDIR/client.conf
 
 
 function list() {
-    # print list of clients 
-    cd /etc/openvpn/easyrsa/keys/
+    # print list of clients
+    cd $EASYRSADIR/keys/
     CLIENTLIST=`ls -1 *.crt | grep -v '^server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
     echo "$CLIENTLIST"
 
@@ -48,7 +48,7 @@ function getcert() {
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
     then
-       
+
         echo "# $CLIENTNAME Certificate"
         cat $KEYDIR/$CLIENTNAME.crt
 
@@ -106,7 +106,7 @@ function addprofile_bulk() {
     echo "ovctl getprofile CLIENTNAME"
 }
 
-function revoke() { 
+function revoke() {
     # revoke the client certificate
     CLIENTNAME=$1
     CLIENTLIST=`list`
@@ -120,8 +120,8 @@ function revoke() {
     fi
 }
 
-function usage() { 
-    # Help 
+function usage() {
+    # Help
     echo "addprofile, list, and print config file"
     echo ""
     echo "sub commands: "
@@ -167,9 +167,9 @@ function main() {
         revoke $@
         ;;
         -h|--help|help)
-        usage 
+        usage
         exit 0
-        ;; 
+        ;;
         *)    # unknown option
         echo "Unknown option $!"
         usage

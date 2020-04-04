@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OCPASSWD_DB=/etc/ocserv/ocpasswd
+OCPASSWD_DB=/etc/vpn-set/ocserv/ocpasswd.db
 
 function usage() { 
     # Help 
@@ -70,7 +70,7 @@ function adduser() {
         else
             PASSWORD=$PASSWORD_PREFIX$(( $RANDOM % 100000 + 100000 ))
             echo "$USERNAME: $PASSWORD"
-            echo -en "$PASSWORD\n$PASSWORD\n" | ocpasswd $USERNAME
+            echo -en "$PASSWORD\n$PASSWORD\n" | ocpasswd -c $OCPASSWD_DB $USERNAME
         fi
     done
 }
