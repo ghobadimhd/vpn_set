@@ -2,6 +2,7 @@ version: '3'
 services:
   nginx:
     build: .
+    env_file: .env
     restart: always
     privileged: false
     ports:
