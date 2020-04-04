@@ -44,7 +44,7 @@ server {
     ssl_certificate     /etc/ssl/cert.pem;
     ssl_certificate_key /etc/ssl/key.pem;
 
-    location /ovpn {
+    location /ovpn/ {
         proxy_pass http://ovpnmon/;
     }
 
