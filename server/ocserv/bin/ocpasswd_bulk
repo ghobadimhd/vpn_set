@@ -54,8 +54,8 @@ function adduser() {
     set -- $PARAMS
 
     USER_PREFIX=$1
-    COUNT=${2:= 0}
-    PASSWORD_PREFIX=${3:= $USER_PREFIX}
+    COUNT=${2:- 0}
+    PASSWORD_PREFIX=${3:- $USER_PREFIX}
 
     if [ "$USER_PREFIX" == "" ] ; then
         >2& echo "prefix missing\n"
