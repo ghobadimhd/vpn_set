@@ -9,10 +9,11 @@ CLIENTCONF=$OPENVPNDIR/client.conf
 function list() {
     # print list of clients
     cd $EASYRSADIR/keys/
-    CLIENTLIST=`ls -1 *.crt | grep -v '^server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
-    echo "$CLIENTLIST"
-
-    cd /
+    if [ "`ls -1 *.crt | grep -vc '^server.crt$\|^ca.crt$'`" != "0" ] ; then
+        CLIENTLIST=`ls -1 *.crt | grep -v '^server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
+        echo "$CLIENTLIST"
+    fi
+    return 0
 }
 
 function getprofile() {
