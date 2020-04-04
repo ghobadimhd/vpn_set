@@ -18,7 +18,7 @@ function list() {
 
 function getprofile() {
     # Print cleint config
-    CLIENTNAME=$1
+    CLIENTNAME=${1:? "Profile name missing"}
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
         cat << _EOF_
