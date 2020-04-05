@@ -72,18 +72,26 @@ function getkey() {
 
 function addprofile() {
     # Create new client certificate and config
-    CLIENTNAME=$1
-    CLIENTLIST=`list`
-    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
-        echo "client certificate already exists"
-        echo "use 'ovctl getprofile $CLIENTNAME' to retrive it configuration"
+    if (( $# )) ; then 
+        echo "Profile name is missing"
+        usage
         return 1
     fi
-    cd $EASYRSADIR
-    . vars > /dev/null
-    ./pkitool  &> /dev/null  $CLIENTNAME
-    echo "use this command to retrive it's configuration:"
-    echo "ovctl getprofile $CLIENTNAME"
+    for CLIENTNAME in $@ ; do 
+        CLIENTLIST=`list`
+        if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+            echo "Profile certificate already exists"
+            echo "use 'ovctl getprofile $CLIENTNAME' to retrive it configuration"
+            return 1
+        fi
+        cd $EASYRSADIR
+        . vars > /dev/null
+        ./pkitool  &> /dev/null  $CLIENTNAME
+        echo "use this command to retrive it's configuration:"
+        echo "ovctl getprofile $CLIENTNAME"
+
+    done
+    return 0
 }
 
 function addprofile_bulk() {
