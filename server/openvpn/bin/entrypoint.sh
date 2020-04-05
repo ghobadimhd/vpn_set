@@ -39,6 +39,8 @@ if ! [ -a $EASYRSA_DIR ] ; then
     ./clean-all
     ./pkitool --initca
     ./pkitool --server server
+    #add read and execcute access to easyrsa directories so openvpn able to read crl.pem
+    chmod o+rw $EASYRSA_DIR $EASYRSA_DIR/keys
 
     # creating empty crl.pem
     # set defaults
@@ -50,12 +52,13 @@ if ! [ -a $EASYRSA_DIR ] ; then
     export KEY_ALTNAMES=""
     openssl ca -gencrl -out $EASYRSA_DIR/keys/crl.pem -config $EASYRSA_DIR/openssl.cnf
 
+    if ! [ -a $EASYRSA_DIR/keys/dh2048.pem ] ; then
+        ./build-dh &> /dev/null
+    fi
 fi
 
 
-if ! [ -a $EASYRSA_DIR/keys/dh2048.pem ] ; then
-    openssl dhparam  -out $EASYRSA_DIR/keys/dh2048.pem 2048
-fi
+
 
 # A iptable MASQUERADE NAT rule
 iptables -t nat -A POSTROUTING -j MASQUERADE

@@ -108,8 +108,11 @@ function addprofile_bulk() {
 }
 
 function revoke() {
+    if ! [ -e ~/.rnd ] ; then
+        openssl rand -out ~/.rnd 512
+    fi
     # revoke the client certificate
-    CLIENTNAME=$1
+    CLIENTNAME=${1:? "Profile name missing"}
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
         cd $EASYRSADIR
