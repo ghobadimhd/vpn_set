@@ -40,7 +40,7 @@ if ! [ -a $EASYRSA_DIR ] ; then
     ./pkitool --initca
     ./pkitool --server server
     #add read and execcute access to easyrsa directories so openvpn able to read crl.pem
-    chmod o+rw $EASYRSA_DIR $EASYRSA_DIR/keys
+    chmod o+rx $EASYRSA_DIR $EASYRSA_DIR/keys
 
     # creating empty crl.pem
     # set defaults
