@@ -28,27 +28,24 @@
         src: "../{{ inventory_hostname }}"
         dest: "{{ project_dir }}"
         local_follow: no
-      notify: rebuild
+      # notify: rebuild
 
     - name: create vpn.env file
       template:
         src: vpn.env.jinja2
         dest: "{{ project_dir }}/vpn.env"
-      notify: rebuild
+      # notify: rebuild
 
     - name: start service
       docker_compose:
         project_src: "{{ project_dir }}/{{ inventory_hostname }}"
-        state: present
-
-  handlers:
-    - name: rebuild
-      docker_compose:
-        project_src: "{{ project_dir }}/{{ inventory_hostname }}"
         build: yes
         state: present
-    - name: rebuild
-      docker_compose:
-        project_src: "{{ project_dir }}/{{ inventory_hostname }}"
-        state: restarted
+
+  # handlers:
+  #   - name: rebuild
+  #     docker_compose:
+  #       project_src: "{{ project_dir }}/{{ inventory_hostname }}"
+  #       build: yes
+  #       state: restarted
 
