@@ -138,6 +138,7 @@ function revoke() {
 }
 
 function export_func() {
+    while (( "$#" )); do
         case "$1" in
             -p|--profiles)
                 EXPORT_PROFILES=true
@@ -158,7 +159,8 @@ function export_func() {
                 echo ""
             exit 0
             ;;
-    esac
+        esac
+    done
 
     PROFILE_LIST=`list`
 
