@@ -26,7 +26,7 @@ _EOF_
 
 
 # Creating base data directoy
-if ! [ -d $OPENVPN_DATA_DIR ] ; then
+if ! [ -a $OPENVPN_DATA_DIR ] ; then
     mkdir -p $OPENVPN_DATA_DIR
 fi
 
