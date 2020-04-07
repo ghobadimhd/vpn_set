@@ -52,8 +52,13 @@ server {
     ssl_certificate     $NGINX_DATA_DIR/cert.pem;
     ssl_certificate_key $NGINX_DATA_DIR/key.pem;
 
-    location /ovpn/ {
+    location /ovpn/ovpnmon/ {
         proxy_pass http://ovpnmon/;
+    }
+
+    location /ovpn/export/ {
+        alias /etc/vpn-set/openvpn/export/;
+        autoindex on;
     }
 
 }

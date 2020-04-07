@@ -3,6 +3,7 @@
 OPENVPN_CONF_DIR=/etc/openvpn
 VPNSET_DIR=/etc/vpn-set
 OPENVPN_DATA_DIR=$VPNSET_DIR/openvpn
+OPENVPN_EXPORT_DIR=$OPENVPN_DATA_DIR/export
 EASYRSA_DIR=$OPENVPN_DATA_DIR/easyrsa
 
 # Craete client configuration file
@@ -29,6 +30,18 @@ _EOF_
 if ! [ -a $OPENVPN_DATA_DIR ] ; then
     mkdir -p $OPENVPN_DATA_DIR
 fi
+
+# Create export directories
+if ! [ -a $OPENVPN_EXPORT_DIR ] ; then
+    mkdir -p $OPENVPN_EXPORT_DIR
+    chmod o=rx $OPENVPN_EXPORT_DIR/$DIR
+fi
+for DIR in certs profiles keys ; do
+    if ! [ -a $OPENVPN_EXPORT_DIR/$DIR ] ; then
+        mkdir -p $OPENVPN_EXPORT_DIR/$DIR
+        chmod o=rx $OPENVPN_EXPORT_DIR/$DIR
+    fi
+done
 
 # Create easyrsa CA directory
 if ! [ -a $EASYRSA_DIR ] ; then
