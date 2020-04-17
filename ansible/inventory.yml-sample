@@ -24,6 +24,8 @@ all:
         bridge_ocserv_port: 4433
         # adming password
         admin_password: 123
+        ocserv_max_client: 1000
+        ocserv_max_same_client: 1
 
         ### openvpn monitor config ###
         openvpnmonitor_default_datetimeformat: "%%d/%%m/%%y"
