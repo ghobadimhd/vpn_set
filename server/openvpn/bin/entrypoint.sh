@@ -34,7 +34,7 @@ fi
 # Create export directories
 if ! [ -a $OPENVPN_EXPORT_DIR ] ; then
     mkdir -p $OPENVPN_EXPORT_DIR
-    chmod o=rx $OPENVPN_EXPORT_DIR/$DIR
+    chmod o=rx $OPENVPN_EXPORT_DIR
 fi
 for DIR in certs profiles keys ; do
     if ! [ -a $OPENVPN_EXPORT_DIR/$DIR ] ; then
