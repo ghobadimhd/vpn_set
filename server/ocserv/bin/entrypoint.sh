@@ -19,6 +19,7 @@ fi
 # Create test user
 if ! [ -a $OCPASSWD_DB ] ; then
     echo -e 'test\ntest\n' | ocpasswd -c $OCPASSWD_DB test
+    ln -s $OCPASSWD_DB /etc/ocserv/ocpasswd
 fi
 # Add nat
 /sbin/iptables -t nat -A POSTROUTING -j MASQUERADE
