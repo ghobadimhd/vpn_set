@@ -12,7 +12,7 @@ EXPORT_DIR_KEYS=$EXPORT_DIR/keys
 
 
 function list() {
-    # print list of clients
+    # print list of users
     cd $EASYRSADIR/keys/
     if [ "`ls -1 *.crt | grep -vc '^server.crt$\|^ca.crt$'`" != "0" ] ; then
         CLIENTLIST=`ls -1 *.crt | grep -v '^server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
@@ -22,7 +22,7 @@ function list() {
 }
 
 function getprofile() {
-    # Print cleint config
+    # Print client profile
     CLIENTNAME=${1:? "Profile name missing"}
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
@@ -49,7 +49,7 @@ _EOF_
 
 
 function getcert() {
-    # Print cleint config
+    # Print client certificate
     CLIENTNAME=$1
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
@@ -63,7 +63,7 @@ function getcert() {
 }
 
 function getkey() {
-    # Print cleint config
+    # Print client key
     CLIENTNAME=$1
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
