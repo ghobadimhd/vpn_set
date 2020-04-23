@@ -1,0 +1,252 @@
+#!/bin/bash
+
+# OCSERV_DIR=/etc/ocserv
+OCSERV_DATA_DIR=/etc/vpn-set/ocserv
+EASYRSADIR=$OCSERV_DATA_DIR/easyrsa
+KEYDIR=$EASYRSADIR/keys
+EXPORT_DIR=$OCSERV_DATA_DIR/export
+EXPORT_DIR_PKCS12=$EXPORT_DIR/pkcs12
+EXPORT_DIR_CERTS=$EXPORT_DIR/certs
+EXPORT_DIR_KEYS=$EXPORT_DIR/keys
+
+
+function list() {
+    # print list of clients
+    cd $EASYRSADIR/keys/
+    if [ "`ls -1 *.crt | grep -vc '^ocserv.crt$\|^ca.crt$'`" != "0" ] ; then
+        CLIENTLIST=`ls -1 *.crt | grep -v '^ocserv.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
+        echo "$CLIENTLIST"
+    fi
+    return 0
+}
+
+function getpkcs12() {
+    # print client pkcs12 certificate
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
+    then
+
+        echo "# $CLIENTNAME Certificate"
+        openssl pkcs12 -export -out - -inkey $KEYDIR/$CLIENTNAME.key -in $KEYDIR/$CLIENTNAME.crt -certfile $KEYDIR/ca.crt -passout pass:
+
+        return 0
+    fi
+}
+
+
+function getcert() {
+    # Print client PEM certificates
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
+    then
+
+        echo "# $CLIENTNAME Certificate"
+        cat $KEYDIR/$CLIENTNAME.crt
+
+        return 0
+    fi
+}
+
+function getkey() {
+    # Print client PEM key
+    CLIENTNAME=$1
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
+    then
+        echo "# $CLIENTNAME Private Key"
+        cat $KEYDIR/$CLIENTNAME.key
+
+        return 0
+    fi
+}
+
+function addcert() {
+    # Create new client certificate and config
+    if (( $# == 0 )) ; then 
+        echo "name is missing"
+        usage
+        return 1
+    fi
+    for CLIENTNAME in $@ ; do 
+        CLIENTLIST=`list`
+        if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+            echo "certificate already exists"
+            echo "use 'certctl getcert $CLIENTNAME' to retrive it configuration"
+            return 1
+        fi
+        cd $EASYRSADIR
+        . vars > /dev/null
+        ./pkitool  &> /dev/null  $CLIENTNAME
+        echo "use this command to retrive it's configuration:"
+        echo "certctl getcert $CLIENTNAME"
+
+    done
+    return 0
+}
+
+function addcert_bulk() {
+    PREFIX=$1
+    COUNT=$2
+    CLIENTLIST=`list`
+    if [ "$COUNT" == "" ] ; then  COUNT=0 ; fi
+    if [ "$PREFIX" == "" ] ; then  echo "prefix missing\n"; usage ; return 1 ; fi
+    cd $EASYRSADIR
+    . vars > /dev/null
+    for i in `seq 1 $COUNT` ; do
+        CLIENTNAME=$PREFIX$i
+        if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+            echo "client $CLIENTNAME certificate already exists"
+        else
+            ./pkitool  &> /dev/null  $CLIENTNAME
+            echo "$CLIENTNAME"
+        fi
+    done
+    echo "use this command to retrive it's configuration:"
+    echo "certctl getcert CLIENTNAME"
+}
+
+function revoke() {
+    if ! [ -e ~/.rnd ] ; then
+        openssl rand -out ~/.rnd 512
+    fi
+    # revoke the client certificate
+    CLIENTNAME=${1:? "name missing"}
+    CLIENTLIST=`list`
+    if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
+        cd $EASYRSADIR
+        . vars > /dev/null
+        ./revoke-full  $CLIENTNAME
+        echo "certificate revoked"
+    else
+        echo "there is no client certificate with name $CLIENTNAME"
+    fi
+}
+
+function export_func() {
+    while (( "$#" )); do
+        case "$1" in
+            -p|--pkcs12)
+                EXPORT_PKCS12=true
+                shift
+            ;;
+            -c|--certs)
+                EXPORT_CERTS=true
+                shift
+            ;;
+            -k|--keys)
+                EXPORT_KEYS=true
+                shift
+            ;;
+            -h|--help|help|*)
+                # Help
+                echo "Usage: certctl export [-p|--pkcs12] [-c|--certs] [-k|--keys] [-h|--help]"
+                echo "export certificates, keys to export directory accessable by frontend web server."
+                echo ""
+            exit 0
+            ;;
+        esac
+    done
+
+    CERT_LIST=`list`
+
+    if ${EXPORT_PKCS12:= false} ; then
+        # Clean before export
+        rm $EXPORT_DIR_PKCS12/*p12 &> /dev/null
+        for PKCS in $CERT_LIST ; do
+            openssl pkcs12 -export -out $EXPORT_DIR_PKCS12/$PKCS.p12 -inkey $KEYDIR/$PKCS.key -in $KEYDIR/$PKCS.crt -certfile $KEYDIR/ca.crt -passout pass:
+        done
+
+        chmod o=r $EXPORT_DIR_PKCS12/*p12 &> /dev/null
+
+    fi
+    if ${EXPORT_CERTS:= false} ; then
+        # Clean before export
+        rm $EXPORT_DIR_CERTS/*crt &> /dev/null
+        for PROFILE in $CERT_LIST ; do
+            cp $KEYDIR/$PROFILE.crt  $EXPORT_DIR_CERTS/
+        done
+
+        chmod o=r $EXPORT_DIR_CERTS/*crt &> /dev/null
+
+    fi
+    if ${EXPORT_KEYS:= false} ; then
+        # Clean before export
+        rm $EXPORT_DIR_KEYS/*key &> /dev/null
+        for PROFILE in $CERT_LIST ; do
+            cp $KEYDIR/$PROFILE.key  $EXPORT_DIR_KEYS/
+        done
+
+        chmod o=r $EXPORT_DIR_KEYS/*key &> /dev/null
+
+    fi
+
+    return 0
+}
+
+function usage() {
+    # Help
+    echo "addcert, addcert_bulk, list, and print config file"
+    echo ""
+    echo "sub commands: "
+    echo "    list                       print list of existing client certificates"
+    echo "    addcert CLIENTNAME         create new client certificate "
+    echo "    addcert_bulk PREFIX COUNT  create multiple client certificate"
+    echo "    getpkcs12 CLIENTNAME       print existing client pkcs12 certificate"
+    echo "    getcert CLIENTNAME         print existing client certificate"
+    echo "    getkey CLIENTNAME          print existing client private key"
+    echo "    revoke CLIENTNAME          revoke client certificate"
+    echo "    export [-k] [-c] [-p]      revoke client certificate"
+    echo "    help                       print this message"
+
+}
+
+function main() {
+    case "$1" in
+        list)
+        shift
+        list $@
+        ;;
+        addcert)
+        shift
+        addcert $@
+        ;;
+        addcert_bulk)
+        shift
+        addcert_bulk $@
+        ;;
+        getcert)
+        shift
+        getcert $@
+        ;;
+        getpkcs12)
+        shift
+        getpkcs12 $@
+        ;;
+        getkey)
+        shift
+        getkey $@
+        ;;
+        revoke)
+        shift
+        revoke $@
+        ;;
+        export)
+        shift
+        export_func $@
+        ;;
+        -h|--help|help)
+        usage
+        exit 0
+        ;;
+        *)    # unknown option
+        echo "Unknown option $!"
+        usage
+        exit 1
+        ;;
+    esac
+
+}
+
+main "$@"

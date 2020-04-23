@@ -24,6 +24,7 @@ bridge_ocserv_port=4433
 admin_password=Admin!1234
 ocserv_max_client=1000
 ocserv_max_same_client=1
+ocserv_alt_auth=none
 ### openvpn monitor config ###
 openvpnmonitor_default_datetimeformat="%%d/%%m/%%y"
 openvpnmonitor_default_latitude=-37

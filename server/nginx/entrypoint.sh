@@ -61,6 +61,11 @@ server {
         autoindex on;
     }
 
+    location /ocserv/export/ {
+        alias /etc/vpn-set/ocserv/export/;
+        autoindex on;
+    }
+
 }
 
 _EOF_

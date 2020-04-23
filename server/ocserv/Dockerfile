@@ -1,5 +1,5 @@
 FROM ubuntu
-RUN    apt update ; apt install -y ca-certificates ocserv less iptables
+RUN    apt update ; apt install -y ca-certificates ocserv less iptables easy-rsa ; apt clean
 
 COPY ./bin/ /usr/local/bin/
 RUN chmod -R a+x /usr/local/bin/
