@@ -15,15 +15,15 @@ all:
         ansible_user: ubuntu
         ansible_become: true
         ansible_python_interpreter: /usr/bin/python3
-        http_port: 8080
+        http_port: 2443
         ovpn_port: 4434
         ovpn_protocol: tcp
         ocserv_port: 4433
-        bridge_http_port: 8080
+        bridge_http_port: 2443
         bridge_ovpn_port: 4434
         bridge_ocserv_port: 4433
-        # adming password
-        admin_password: 123
+        # admin password
+        admin_password: Admin!1234
         ocserv_max_client: 1000
         ocserv_max_same_client: 1
         ocserv_alt_auth: none
