@@ -179,7 +179,7 @@ function export_func() {
     if ${EXPORT_PKCS12:= false} ; then
         # Clean before export
         rm $EXPORT_DIR_PKCS12/*p12 &> /dev/null
-        for PKCS in $CERT_LIST ; do
+        for PKCS in $CERT_LIST ca ; do
             openssl pkcs12 -export -out $EXPORT_DIR_PKCS12/$PKCS.p12 -inkey $KEYDIR/$PKCS.key -in $KEYDIR/$PKCS.crt -certfile $KEYDIR/ca.crt -passout pass:
         done
 
@@ -189,7 +189,7 @@ function export_func() {
     if ${EXPORT_CERTS:= false} ; then
         # Clean before export
         rm $EXPORT_DIR_CERTS/*crt &> /dev/null
-        for PROFILE in $CERT_LIST ; do
+        for PROFILE in $CERT_LIST ca ; do
             cp $KEYDIR/$PROFILE.crt  $EXPORT_DIR_CERTS/
         done
 

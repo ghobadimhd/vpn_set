@@ -202,7 +202,7 @@ function export_func() {
     if ${EXPORT_CERTS:= false} ; then
         # Clean before export
         rm $EXPORT_DIR_CERTS/*crt &> /dev/null
-        for PROFILE in $PROFILE_LIST ; do
+        for PROFILE in $PROFILE_LIST ca ; do
             cp $KEYDIR/$PROFILE.crt  $EXPORT_DIR_CERTS/
         done
 
