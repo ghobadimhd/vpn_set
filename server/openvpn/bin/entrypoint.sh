@@ -6,6 +6,10 @@ OPENVPN_DATA_DIR=$VPNSET_DIR/openvpn
 OPENVPN_EXPORT_DIR=$OPENVPN_DATA_DIR/export
 EASYRSA_DIR=$OPENVPN_DATA_DIR/easyrsa
 
+if ! [ -e ~/.rnd ] ; then
+    openssl rand -out ~/.rnd 512
+fi
+
 # Craete client configuration file
 cat << _EOF_ > /etc/openvpn/client.conf
 `cat /etc/openvpn/client.conf.tpl`
