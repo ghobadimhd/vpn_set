@@ -10,6 +10,9 @@ OCPASSWD_DB=$OCSERV_DATA_DIR/ocpasswd.db
 : ${OCSERV_MAX_CLIENT:= 1000 }
 : ${OCSERV_MAX_SAME_CLIENT:= 1 }
 
+if ! [ -e ~/.rnd ] ; then
+    openssl rand -out ~/.rnd 512
+fi
 
 # Creating base directoy
 if ! [ -d $OCSERV_DATA_DIR ] ; then
@@ -37,9 +40,9 @@ if ! [ -a $OCSERV_EASYRSA_DIR ] ; then
     . vars
     ./clean-all
     ./pkitool --initca
-    ./pkitool --server ocserv
+    ./pkitool --server "$SERVER_ADDRESS"
     #add read and execcute access to easyrsa directories so ocserv able to read crl.pem
-    chmod o+rx $OCSERV_EASYRSA_DIR $OCSERV_EASYRSA_DIR/keys
+    chmod o+rx -R $OCSERV_EASYRSA_DIR $OCSERV_EASYRSA_DIR/keys
 
     # creating empty crl.pem
     # set defaults
@@ -56,9 +59,9 @@ if ! [ -a $OCSERV_EASYRSA_DIR ] ; then
     fi
 fi
 
-# Create self sign ssl cert and key
+# Create self sign ssl cert and key for password only authentication
 if ! [ -e $OCSERV_DATA_DIR/cert.pem ] && [ ${OCSERV_ALT_AUTH:- "none" } == "none" ] ; then
-        openssl req -x509 -newkey rsa:4096 -keyout $OCSERV_DATA_DIR/key.pem -out $OCSERV_DATA_DIR/cert.pem -nodes -subj '/CN=mydom.com/O=My Company Name LTD./C=US';
+        openssl req -x509 -newkey rsa:4096 -keyout $OCSERV_DATA_DIR/key.pem -out $OCSERV_DATA_DIR/cert.pem -nodes -subj "/CN=$SERVER_ADDRESS/O=My Company Name LTD./C=US";
 fi 
 
 # Create test user
@@ -82,8 +85,8 @@ socket-file = /var/run/ocserv-socket
     certificate)
         echo '# alternative authentication method'
         echo 'enable-auth = "certificate"'
-        echo server-cert = $OCSERV_EASYRSA_DIR/keys/ocserv.crt
-        echo server-key =  $OCSERV_EASYRSA_DIR/keys/ocserv.key
+        echo server-cert = $OCSERV_EASYRSA_DIR/keys/$SERVER_ADDRESS.crt
+        echo server-key =  $OCSERV_EASYRSA_DIR/keys/$SERVER_ADDRESS.key
         echo ca-cert =  $OCSERV_EASYRSA_DIR/keys/ca.crt
         echo crl = $OCSERV_EASYRSA_DIR/keys/crl.pem
     ;;
