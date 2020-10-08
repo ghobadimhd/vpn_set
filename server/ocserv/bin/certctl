@@ -107,18 +107,43 @@ function addcert_bulk() {
     echo "certctl getcert CLIENTNAME"
 }
 
-function revoke() {
+function gencrl() {
+    # generate new crl.pem
     if ! [ -e ~/.rnd ] ; then
         openssl rand -out ~/.rnd 512
     fi
+    CRLDAYS=${1:-365}
+    cd $EASYRSADIR
+    . vars > /dev/null
+    # set defaults
+    export KEY_CN=""
+    export KEY_OU=""
+    export KEY_NAME=""
+    export KEY_ALTNAMES=""
+    openssl ca -gencrl -out $KEYDIR/"crl.pem" -config "$KEY_CONFIG" -crldays $CRLDAYS
+    echo "new crl generated"
+}
+
+function revoke() {
     # revoke the client certificate
+    if ! [ -e ~/.rnd ] ; then
+        openssl rand -out ~/.rnd 512
+    fi
     CLIENTNAME=${1:? "name missing"}
+    CRLDAYS=${2:-365}
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
         cd $EASYRSADIR
         . vars > /dev/null
-        ./revoke-full  $CLIENTNAME
+        # set defaults
+        export KEY_CN=""
+        export KEY_OU=""
+        export KEY_NAME=""
+        export KEY_ALTNAMES=""
+
+        openssl ca -revoke $KEYDIR/"$CLIENTNAME.crt" -config "$KEY_CONFIG"
         echo "certificate revoked"
+        gencrl $CRLDAYS
     else
         echo "there is no client certificate with name $CLIENTNAME"
     fi
@@ -164,7 +189,7 @@ function export_func() {
     if ${EXPORT_CERTS:= false} ; then
         # Clean before export
         rm $EXPORT_DIR_CERTS/*crt &> /dev/null
-        for PROFILE in $CERT_LIST ; do
+        for PROFILE in $CERT_LIST ca ; do
             cp $KEYDIR/$PROFILE.crt  $EXPORT_DIR_CERTS/
         done
 
@@ -197,6 +222,7 @@ function usage() {
     echo "    getcert CLIENTNAME         print existing client certificate"
     echo "    getkey CLIENTNAME          print existing client private key"
     echo "    revoke CLIENTNAME          revoke client certificate"
+    echo "    gencrl [CRL_EXPIRE_DAYS default is 365]          revoke client certificate"
     echo "    export [-k] [-c] [-p]      revoke client certificate"
     echo "    help                       print this message"
 
@@ -231,6 +257,10 @@ function main() {
         revoke)
         shift
         revoke $@
+        ;;
+        gencrl)
+        shift
+        gencrl $@
         ;;
         export)
         shift
