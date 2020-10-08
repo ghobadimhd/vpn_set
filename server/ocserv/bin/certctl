@@ -155,7 +155,7 @@ function export_func() {
         # Clean before export
         rm $EXPORT_DIR_PKCS12/*p12 &> /dev/null
         for PKCS in $CERT_LIST ; do
-            openssl pkcs12 -export -out $EXPORT_DIR_PKCS12/$PKCS.p12 -inkey $KEYDIR/$PKCS.key -in $KEYDIR/$PKCS.crt -certfile $KEYDIR/ca.crt -passout pass:
+            openssl pkcs12 -export -out $EXPORT_DIR_PKCS12/$PKCS.p12 -inkey $KEYDIR/$PKCS.key -in $KEYDIR/$PKCS.crt -certfile $KEYDIR/ca.crt -passout pass:1234
         done
 
         chmod o=r $EXPORT_DIR_PKCS12/*p12 &> /dev/null
