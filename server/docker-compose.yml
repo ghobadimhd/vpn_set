@@ -1,6 +1,7 @@
 version: '3'
 services:
   openvpn:
+    container_name: openvpn
     build: openvpn/
     env_file: .env
     restart: always
@@ -13,6 +14,7 @@ services:
       - vpnset:/etc/vpn-set/
 
   nginx:
+    container_name: nginx
     build: nginx/
     env_file: .env
     restart: always
@@ -26,6 +28,7 @@ services:
       - vpnset:/etc/vpn-set/
 
   ocserv:
+    container_name: ocserv
     build: ocserv/
     env_file: .env
     restart: always
@@ -39,6 +42,7 @@ services:
       - vpnset:/etc/vpn-set/
 
   ovpnmon:
+    container_name: ovpnmon
     image: ruimarinho/openvpn-monitor
     env_file: .env
     restart: always
