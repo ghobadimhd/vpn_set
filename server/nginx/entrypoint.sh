@@ -36,7 +36,7 @@ htpasswd -bc $NGINX_DATA_DIR/admin.htpasswd admin $ADMIN_PASSWORD
 cat << _EOF_ > /etc/nginx/conf.d/default.conf
 
 server {
-	listen 80 ssl;
+	listen 443 ssl;
 
 	root /var/www/;
 	index index.html index.htm;
