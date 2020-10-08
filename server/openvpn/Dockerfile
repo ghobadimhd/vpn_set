@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:bionic
 
 RUN apt update ; apt install -y openvpn less iptables easy-rsa ;
 
