@@ -2,7 +2,6 @@ project_dir: /opt/vpn-set
 
 packages:
   - docker.io
-  - python-pip
   - python3-pip
   - python3-setuptools
   - python-setuptools
