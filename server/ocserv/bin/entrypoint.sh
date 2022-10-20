@@ -40,29 +40,34 @@ if ! [ -a $OCSERV_EASYRSA_DIR ] ; then
     . vars
     ./clean-all
     ./pkitool --initca
-    ./pkitool --server "$SERVER_ADDRESS"
-    #add read and execcute access to easyrsa directories so ocserv able to read crl.pem
-    chmod o+rx -R $OCSERV_EASYRSA_DIR $OCSERV_EASYRSA_DIR/keys
+fi
 
+cd $OCSERV_EASYRSA_DIR
+cp openssl-1.0.0.cnf openssl.cnf
+. vars
+
+if ! [ -a $OCSERV_EASYRSA_DIR/keys/$SERVER_ADDRESS ] ; then
+    ./pkitool --server "$SERVER_ADDRESS"
+fi
+
+if ! [ -a $OCSERV_EASYRSA_DIR/keys/crl.pem ] ; then
     # creating empty crl.pem
     # set defaults
     export KEY_CN=""
     export KEY_OU=""
     export KEY_NAME=""
-
-	# required due to hack in openssl.cnf that supports Subject Alternative Names
+    # required due to hack in openssl.cnf that supports Subject Alternative Names
     export KEY_ALTNAMES=""
     openssl ca -gencrl -out $OCSERV_EASYRSA_DIR/keys/crl.pem -config $OCSERV_EASYRSA_DIR/openssl.cnf
 
-    if ! [ -a $OCSERV_EASYRSA_DIR/keys/dh2048.pem ] ; then
-        ./build-dh &> /dev/null
-    fi
 fi
 
-# Create self sign ssl cert and key for password only authentication
-if ! [ -e $OCSERV_DATA_DIR/cert.pem ] && [ ${OCSERV_ALT_AUTH:- "none" } == "none" ] ; then
-        openssl req -x509 -newkey rsa:4096 -keyout $OCSERV_DATA_DIR/key.pem -out $OCSERV_DATA_DIR/cert.pem -nodes -subj "/CN=$SERVER_ADDRESS/O=My Company Name LTD./C=US";
-fi 
+if ! [ -a $OCSERV_EASYRSA_DIR/keys/dh2048.pem ] ; then
+    ./build-dh &> /dev/null
+fi
+
+    #add read and execcute access to easyrsa directories so ocserv able to read crl.pem
+chmod o+rx -R $OCSERV_EASYRSA_DIR $OCSERV_EASYRSA_DIR/keys
 
 # Create test user
 if ! [ -a $OCPASSWD_DB ] ; then
@@ -99,9 +104,9 @@ socket-file = /var/run/ocserv-socket
         echo crl = $OVPN_EASYRSA_DIR/keys/crl.pem
     ;;
     none)
-        echo server-cert = /etc/ssl/certs/ssl-cert-snakeoil.pem
-        echo server-key = /etc/ssl/private/ssl-cert-snakeoil.key
-        echo ca-cert = /etc/ssl/certs/ssl-cert-snakeoil.pem
+        echo server-cert = $OCSERV_EASYRSA_DIR/keys/$SERVER_ADDRESS.crt
+        echo server-key =  $OCSERV_EASYRSA_DIR/keys/$SERVER_ADDRESS.key
+        echo ca-cert =  $OCSERV_EASYRSA_DIR/keys/ca.crt
     ;;
 esac`
 isolate-workers = true
