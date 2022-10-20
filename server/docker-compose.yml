@@ -3,6 +3,7 @@ services:
   openvpn:
     container_name: openvpn
     build: openvpn/
+    image: vpnset-openvpn
     env_file: .env
     restart: always
     privileged: true
@@ -11,11 +12,12 @@ services:
     networks:
       - vpn
     volumes:
-      - vpnset:/etc/vpn-set/
+      - ./vpn-data:/etc/vpn-set/
 
   nginx:
     container_name: nginx
     build: nginx/
+    image: vpnset-nginx
     env_file: .env
     restart: always
     privileged: false
@@ -25,11 +27,12 @@ services:
     networks:
       - vpn
     volumes:
-      - vpnset:/etc/vpn-set/
+      - ./vpn-data:/etc/vpn-set/
 
   ocserv:
     container_name: ocserv
     build: ocserv/
+    image: vpnset-ocserv
     env_file: .env
     restart: always
     privileged: true
@@ -39,7 +42,7 @@ services:
     networks:
       - vpn
     volumes:
-      - vpnset:/etc/vpn-set/
+      - ./vpn-data:/etc/vpn-set/
 
   ovpnmon:
     container_name: ovpnmon
@@ -53,5 +56,3 @@ services:
 
 networks:
   vpn:
-volumes:
-  vpnset:
