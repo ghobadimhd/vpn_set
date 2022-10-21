@@ -56,3 +56,52 @@ This is simple project to setup multiple VPN servers.
    cd bridge
    docker-compose up -d 
    ```
+
+# Usage
+
+**TODO
+
+## Openvpn
+
+***TODO 
+
+```bash 
+docker exec openvpn ovctl -h 
+addprofile, list, and print config file
+
+sub commands: 
+    list                       print list of existing client certificates
+    addprofile CLIENTNAME         create new client certificate 
+    addprofile_bulk PREFIX COUNT  create multiple client certificate
+    getprofile CLIENTNAME      print existing client profile
+    getcert CLIENTNAME         print existing client certificate
+    getkey CLIENTNAME          print existing client private key
+    revoke CLIENTNAME          revoke client certificate
+    gencrl [CRL_EXPIRE_DAYS default is 365]          revoke client certificate
+    export [-k] [-c] [-p]      revoke client certificate
+    help                       print this message
+
+```
+
+## Openconnect
+
+**TODO
+
+### Client Certificate
+
+```bash 
+docker exec ocserv certctl -h 
+addcert, addcert_bulk, list, and print config file
+
+sub commands: 
+    list                       print list of existing client certificates
+    addcert CLIENTNAME         create new client certificate 
+    addcert_bulk PREFIX COUNT  create multiple client certificate
+    getpkcs12 CLIENTNAME       print existing client pkcs12 certificate
+    getcert CLIENTNAME         print existing client certificate
+    getkey CLIENTNAME          print existing client private key
+    revoke CLIENTNAME          revoke client certificate
+    gencrl [CRL_EXPIRE_DAYS default is 365]          revoke client certificate
+    export [-k] [-c] [-p]      revoke client certificate
+    help                       print this message
+```
