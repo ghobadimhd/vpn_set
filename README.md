@@ -5,7 +5,7 @@ This is simple project to setup multiple VPN servers.
 
 # Design
 
-![Architecture]([https://](https://github.com/ghobadimhd/vpn_set/blob/readme/assets/design.png))
+![Design]([https://](https://github.com/ghobadimhd/vpn_set/blob/readme/assets/design.png)
 
 # Requirments
 
