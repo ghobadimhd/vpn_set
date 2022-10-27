@@ -50,7 +50,7 @@ for DIR in certs profiles keys ; do
 done
 
 # Create easyrsa CA directory
-ovctl initpki
+ovctl init-pki
 ovctl server-create $OVPN_CERT_NAME
 
 # Create openvpn user
