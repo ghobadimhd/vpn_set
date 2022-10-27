@@ -7,6 +7,8 @@ OPENVPN_DATA_DIR=$VPNSET_DIR/openvpn
 OPENVPN_EXPORT_DIR=$OPENVPN_DATA_DIR/export
 EASYRSA_DIR=$OPENVPN_DATA_DIR/easyrsa
 
+export EASYRSA_BATCH=1
+
 # Craete client configuration file
 cat << _EOF_ > /etc/vpnset/openvpn/client.conf
 `cat /client.conf.tpl`
@@ -49,7 +51,6 @@ if ! [ -a $EASYRSA_DIR ] ; then
     mkdir $EASYRSA_DIR
     tar xf /EasyRSA-3.1.1.tgz -C /etc/vpnset/openvpn/easyrsa/  --strip-components=1
     cd $EASYRSA_DIR
-    export EASYRSA_BATCH=1
     if ! [ -a pki ] ; then  
         ./easyrsa init-pki ;
         openssl rand 40 > pki/.rnd
@@ -82,7 +83,7 @@ id openvpn || adduser --home /etc/vpnset/openvpn --shell /usr/sbin/nologin --dis
 
 cp $EASYRSA_DIR/pki/issued/ov-server.crt $EASYRSA_DIR/pki/private/ov-server.key $OPENVPN_CONF_DIR/
 chown openvpn:openvpn $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
-chmod u+rx $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
+chmod u=rx $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
 
 
 # A iptable MASQUERADE NAT rule

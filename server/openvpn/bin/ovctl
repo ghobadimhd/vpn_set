@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPENVPNDIR=/etc/openvpn
+OPENVPNDIR=/etc/vpnset/openvpn
 
 OPENVPN_DATA_DIR=/etc/vpnset/openvpn
 EASYRSADIR=$OPENVPN_DATA_DIR/easyrsa
@@ -15,6 +15,7 @@ EXPORT_DIR_PROFILES=$EXPORT_DIR/profiles
 EXPORT_DIR_CERTS=$EXPORT_DIR/certs
 EXPORT_DIR_KEYS=$EXPORT_DIR/keys
 
+export EASYRSA_BATCH=1
 
 function list() {
     # print list of users
