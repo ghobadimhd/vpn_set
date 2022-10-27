@@ -5,7 +5,10 @@ VPNSET_DIR=/etc/vpnset
 OPENVPN_CONF_DIR=$VPNSET_DIR/openvpn
 OPENVPN_DATA_DIR=$VPNSET_DIR/openvpn
 OPENVPN_EXPORT_DIR=$OPENVPN_DATA_DIR/export
-EASYRSA_DIR=$OPENVPN_DATA_DIR/easyrsa
+
+OVPN_CERT_NAME=ov-server
+
+EASYRSA_DIR=$VPNSET_DIR/easyrsa
 
 export EASYRSA_BATCH=1
 
@@ -47,43 +50,15 @@ for DIR in certs profiles keys ; do
 done
 
 # Create easyrsa CA directory
-if ! [ -a $EASYRSA_DIR ] ; then
-    mkdir $EASYRSA_DIR
-    tar xf /EasyRSA-3.1.1.tgz -C /etc/vpnset/openvpn/easyrsa/  --strip-components=1
-    cd $EASYRSA_DIR
-    if ! [ -a pki ] ; then  
-        ./easyrsa init-pki ;
-        openssl rand 40 > pki/.rnd
-    fi
-    if ! [ -a pki/ca.crt ]; then
-        EASYRSA_REQ_CN=CA ./easyrsa build-ca nopass
-    fi
-    if ! [ -a pki/issued/ov-server.crt ]; then
-        echo "Create server"
-        ./easyrsa build-server-full ov-server nopass 2> /var/log/ovctl.log > /var/log/ovctl.log
-    fi
-
-    # creating empty crl.pem
-    # set defaults
-    echo "Generate CRL" 
-    ./easyrsa gen-crl 2> /var/log/ovctl.log > /var/log/ovctl.log
-
-    if ! [ -a $EASYRSA_DIR/pki/dh.pem ] ; then
-        ./easyrsa gen-dh &> /dev/null
-    fi
-    #add read and execcute access to easyrsa directories so openvpn able to read crl.pem
-    chmod o+rx $EASYRSA_DIR $EASYRSA_DIR/pki $EASYRSA_DIR/pki/crl.pem $EASYRSA_DIR/pki/dh.pem
-fi
-
-
-
+ovctl initpki
+ovctl server-create $OVPN_CERT_NAME
 
 # Create openvpn user
 id openvpn || adduser --home /etc/vpnset/openvpn --shell /usr/sbin/nologin --disabled-login openvpn --system --group
 
-cp $EASYRSA_DIR/pki/issued/ov-server.crt $EASYRSA_DIR/pki/private/ov-server.key $OPENVPN_CONF_DIR/
-chown openvpn:openvpn $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
-chmod u=rx $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
+cp $EASYRSA_DIR/pki/issued/$OVPN_CERT_NAME.crt $EASYRSA_DIR/pki/private/$OVPN_CERT_NAME.key $OPENVPN_CONF_DIR/
+chown openvpn:openvpn $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.crt $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.key
+chmod u=rx $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.crt $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.key
 
 
 # A iptable MASQUERADE NAT rule
