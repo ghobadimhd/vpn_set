@@ -1,10 +1,15 @@
 #!/bin/bash
 
 OPENVPNDIR=/etc/openvpn
-OPENVPN_DATA_DIR=/etc/vpn-set/openvpn
+
+OPENVPN_DATA_DIR=/etc/vpnset/openvpn
 EASYRSADIR=$OPENVPN_DATA_DIR/easyrsa
-KEYDIR=$EASYRSADIR/keys
+PKI_DIR=$EASYRSADIR/pki
+KEYDIR=$EASYRSADIR/pki/private
+CERTDIR=$EASYRSADIR/pki/issued
+
 CLIENTCONF=$OPENVPNDIR/client.conf
+
 EXPORT_DIR=$OPENVPN_DATA_DIR/export
 EXPORT_DIR_PROFILES=$EXPORT_DIR/profiles
 EXPORT_DIR_CERTS=$EXPORT_DIR/certs
@@ -13,9 +18,9 @@ EXPORT_DIR_KEYS=$EXPORT_DIR/keys
 
 function list() {
     # print list of users
-    cd $EASYRSADIR/keys/
-    if [ "`ls -1 *.crt | grep -vc '^server.crt$\|^ca.crt$'`" != "0" ] ; then
-        CLIENTLIST=`ls -1 *.crt | grep -v '^server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
+    cd $EASYRSADIR/pki/issued
+    if [ "`ls -1 *.crt | grep -vc '^ov-server.crt$\|^ca.crt$'`" != "0" ] ; then
+        CLIENTLIST=`ls -1 *.crt | grep -v '^ov-server.crt$\|^ca.crt$' | sed 's/\(.*\)\.crt/\1/'`
         echo "$CLIENTLIST"
     fi
     return 0
@@ -32,11 +37,11 @@ function getprofile() {
 
 # CA server certificate
 <ca>
-`cat $KEYDIR/ca.crt`
+`cat $EASYRSADIR/pki/ca.crt`
 </ca>
 
 <cert>
-`cat $KEYDIR/$CLIENTNAME.crt`
+`cat $CERTDIR/$CLIENTNAME.crt`
 </cert>
 
 <key>
@@ -52,11 +57,13 @@ function getcert() {
     # Print client certificate
     CLIENTNAME=$1
     CLIENTLIST=`list`
+
+    # Check if client exists
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
     then
 
         echo "# $CLIENTNAME Certificate"
-        cat $KEYDIR/$CLIENTNAME.crt
+        ./easyrsa show-cert $CLIENTNAME
 
         return 0
     fi
@@ -66,6 +73,7 @@ function getkey() {
     # Print client key
     CLIENTNAME=$1
     CLIENTLIST=`list`
+    # Check if client exists
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ]
     then
         echo "# $CLIENTNAME Private Key"
@@ -90,8 +98,7 @@ function addprofile() {
             return 1
         fi
         cd $EASYRSADIR
-        . vars > /dev/null
-        ./pkitool  &> /dev/null  $CLIENTNAME
+        ./easyrsa build-client-full $CLIENTNAME nopass  2> /var/log/ovctl.log > /var/log/ovctl.log
         echo "use this command to retrive it's configuration:"
         echo "ovctl getprofile $CLIENTNAME"
 
@@ -106,7 +113,6 @@ function addprofile_bulk() {
     if [ "$COUNT" == "" ] ; then  COUNT=0 ; fi
     if [ "$PREFIX" == "" ] ; then  echo "prefix missing\n"; usage ; return 1 ; fi
     cd $EASYRSADIR
-    . vars > /dev/null
     for i in `seq 1 $COUNT` ; do
         CLIENTNAME=$PREFIX$i
         if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
@@ -122,41 +128,21 @@ function addprofile_bulk() {
 
 function gencrl() {
     # generate new crl.pem
-    if ! [ -e ~/.rnd ] ; then
-        openssl rand -out ~/.rnd 512
-    fi
-    CRLDAYS=${1:-365}
     cd $EASYRSADIR
-    . vars > /dev/null
-    # set defaults
-    export KEY_CN=""
-    export KEY_OU=""
-    export KEY_NAME=""
-    export KEY_ALTNAMES=""
-    openssl ca -gencrl -out $KEYDIR/"crl.pem" -config "$KEY_CONFIG" -crldays $CRLDAYS
+    ./easyrsa gen-crl > ./ovctl.log
     echo "new crl generated"
 }
 
 function revoke() {
     # revoke the client certificate
-    if ! [ -e ~/.rnd ] ; then
-        openssl rand -out ~/.rnd 512
-    fi
     CLIENTNAME=${1:? "name missing"}
-    CRLDAYS=${2:-365}
     CLIENTLIST=`list`
     if [ "`echo "$CLIENTLIST" | grep "$CLIENTNAME"`" != '' ] ; then
         cd $EASYRSADIR
-        . vars > /dev/null
-        # set defaults
-        export KEY_CN=""
-        export KEY_OU=""
-        export KEY_NAME=""
-        export KEY_ALTNAMES=""
 
-        openssl ca -revoke $KEYDIR/"$CLIENTNAME.crt" -config "$KEY_CONFIG"
+        ./easyrsa revoke $CLIENTNAME 2> /var/log/ovctl.log > /var/log/ovctl.log
         echo "certificate revoked"
-        gencrl $CRLDAYS
+        gencrl
     else
         echo "there is no client certificate with name $CLIENTNAME"
     fi
@@ -202,9 +188,10 @@ function export_func() {
     if ${EXPORT_CERTS:= false} ; then
         # Clean before export
         rm $EXPORT_DIR_CERTS/*crt &> /dev/null
-        for PROFILE in $PROFILE_LIST ca ; do
-            cp $KEYDIR/$PROFILE.crt  $EXPORT_DIR_CERTS/
+        for PROFILE in $PROFILE_LIST ; do
+            cp $CERTDIR/$PROFILE.crt  $EXPORT_DIR_CERTS/
         done
+        cp $PKI_DIR/$ca.crt  $EXPORT_DIR_CERTS/
 
         chmod o=r $EXPORT_DIR_CERTS/*crt &> /dev/null
 

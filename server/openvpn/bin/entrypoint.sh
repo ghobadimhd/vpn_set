@@ -1,18 +1,15 @@
 #!/bin/bash
 
-OPENVPN_CONF_DIR=/etc/openvpn
-VPNSET_DIR=/etc/vpn-set
+
+VPNSET_DIR=/etc/vpnset
+OPENVPN_CONF_DIR=$VPNSET_DIR/openvpn
 OPENVPN_DATA_DIR=$VPNSET_DIR/openvpn
 OPENVPN_EXPORT_DIR=$OPENVPN_DATA_DIR/export
 EASYRSA_DIR=$OPENVPN_DATA_DIR/easyrsa
 
-if ! [ -e ~/.rnd ] ; then
-    openssl rand -out ~/.rnd 512
-fi
-
 # Craete client configuration file
-cat << _EOF_ > /etc/openvpn/client.conf
-`cat /etc/openvpn/client.conf.tpl`
+cat << _EOF_ > /etc/vpnset/openvpn/client.conf
+`cat /client.conf.tpl`
 `echo remote $BRIDGE_ADDRESS`
 `echo proto $OVPN_PROTOCOL `
 `echo port $BRIDGE_OVPN_PORT`
@@ -21,11 +18,11 @@ _EOF_
 
 
 # Create Server Config
-cat << _EOF_ > $OPENVPN_CONF_DIR/openvpn.conf
+cat << _EOF_ > $OPENVPN_DATA_DIR/openvpn.conf
 management 0.0.0.0 5555
 `echo proto $OVPN_PROTOCOL `
 `echo port 1194`
-`cat $OPENVPN_CONF_DIR/openvpn.conf.tpl`
+`cat /openvpn.conf.tpl`
 
 _EOF_
 
@@ -49,36 +46,47 @@ done
 
 # Create easyrsa CA directory
 if ! [ -a $EASYRSA_DIR ] ; then
-    make-cadir $EASYRSA_DIR
+    mkdir $EASYRSA_DIR
+    tar xf /EasyRSA-3.1.1.tgz -C /etc/vpnset/openvpn/easyrsa/  --strip-components=1
     cd $EASYRSA_DIR
-    cp openssl-1.0.0.cnf openssl.cnf
-    . vars
-    ./clean-all
-    ./pkitool --initca
-    ./pkitool --server server
-    #add read and execcute access to easyrsa directories so openvpn able to read crl.pem
-    chmod o+rx $EASYRSA_DIR $EASYRSA_DIR/keys
+    export EASYRSA_BATCH=1
+    if ! [ -a pki ] ; then  
+        ./easyrsa init-pki ;
+        openssl rand 40 > pki/.rnd
+    fi
+    if ! [ -a pki/ca.crt ]; then
+        EASYRSA_REQ_CN=CA ./easyrsa build-ca nopass
+    fi
+    if ! [ -a pki/issued/ov-server.crt ]; then
+        echo "Create server"
+        ./easyrsa build-server-full ov-server nopass 2> /var/log/ovctl.log > /var/log/ovctl.log
+    fi
 
     # creating empty crl.pem
     # set defaults
-    export KEY_CN=""
-    export KEY_OU=""
-    export KEY_NAME=""
+    echo "Generate CRL" 
+    ./easyrsa gen-crl 2> /var/log/ovctl.log > /var/log/ovctl.log
 
-	# required due to hack in openssl.cnf that supports Subject Alternative Names
-    export KEY_ALTNAMES=""
-    openssl ca -gencrl -out $EASYRSA_DIR/keys/crl.pem -config $EASYRSA_DIR/openssl.cnf
-
-    if ! [ -a $EASYRSA_DIR/keys/dh2048.pem ] ; then
-        ./build-dh &> /dev/null
+    if ! [ -a $EASYRSA_DIR/pki/dh.pem ] ; then
+        ./easyrsa gen-dh &> /dev/null
     fi
+    #add read and execcute access to easyrsa directories so openvpn able to read crl.pem
+    chmod o+rx $EASYRSA_DIR $EASYRSA_DIR/pki $EASYRSA_DIR/pki/crl.pem $EASYRSA_DIR/pki/dh.pem
 fi
 
 
 
 
+# Create openvpn user
+id openvpn || adduser --home /etc/vpnset/openvpn --shell /usr/sbin/nologin --disabled-login openvpn --system --group
+
+cp $EASYRSA_DIR/pki/issued/ov-server.crt $EASYRSA_DIR/pki/private/ov-server.key $OPENVPN_CONF_DIR/
+chown openvpn:openvpn $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
+chmod u+rx $VPNSET_DIR/openvpn/ov-server.crt $VPNSET_DIR/openvpn/ov-server.key
+
+
 # A iptable MASQUERADE NAT rule
-iptables -t nat -A POSTROUTING -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.10.20.0/24 -o ovpntun -j MASQUERADE
 
 
 exec "$@"
