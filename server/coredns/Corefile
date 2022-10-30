@@ -1,0 +1,13 @@
+
+
+. {
+    auto
+    reload 10s
+    forward . 1.1.1.1
+    cache {
+        success 5000
+        denial 2500
+	}
+    errors stdout
+    log stdout
+}

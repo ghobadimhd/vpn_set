@@ -1,0 +1,69 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/vpnset/traefik/vpnset-server.crt
+        keyFile: /etc/vpnset/traefik/vpnset-server.key
+
+http:
+  routers:
+    api:
+      rule: PathPrefix(`/`)
+      entryPoints: 
+        - https
+      service: api@internal
+      middlewares:
+        - auth
+      tls: {}
+    metrics:
+      rule: PathPrefix(`/metrics`)
+      entryPoints: 
+        - https
+      service: prometheus@internal
+      middlewares:
+        - auth
+      tls: {}
+  middlewares:
+    auth:
+      basicAuth:
+        # admin:ChangeMeNoWplease
+        usersfile: /etc/vpnset/traefik/passwd
+# tcp:
+#   routers:
+#     ocserv:
+#       # won't listen to entry point web
+#       entryPoints:
+#         - "ocserv"
+#       service: "ocserv"
+#       # will route TLS requests (and ignore non tls requests)
+#       tls: {}
+#     openvpn:
+#       # won't listen to entry point web
+#       entryPoints:
+#         - "openvpn"
+#       service: "openvpn"
+#       # will route TLS requests (and ignore non tls requests)
+#       tls: {}
+#     danted:
+#       # won't listen to entry point web
+#       entryPoints:
+#         - "openvpn"
+#       service: "openvpn"
+#       # will route TLS requests (and ignore non tls requests)
+#       tls: {}
+#     ovpnmon:
+#       # won't listen to entry point web
+#       entryPoints:
+#         - "openvpn"
+#       service: "openvpn"
+#       # will route TLS requests (and ignore non tls requests)
+#       tls: {}
+
+
+# tcp:
+#   services:
+#     my-service:
+#       loadBalancer:
+#         servers:
+#         - address: "<private-ip-server-1>:<private-port-server-1>"
+#         - address: "<private-ip-server-2>:<private-port-server-2>"

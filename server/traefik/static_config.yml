@@ -1,0 +1,39 @@
+api:
+  dashboard: true
+providers:
+  file: 
+    filename: /traefik/dynamic_config.yml
+  docker: 
+    exposedByDefault: false
+
+entryPoints:
+  https:
+    address: ':2441'
+  ocserv:
+    address: ':2442'
+  ocserv_udp:
+    address: ':2442/udp'
+  openvpn:
+    address: ':2443'
+  danted:
+    address: ':2444'
+  coredns:
+    address: ':2445'
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    entryPoint: traefik
+    manualRouting: true
+
+# log: 
+#   level: DEBUG
+
+# accessLog: {}
+
+# tracing:
+#   jaeger:
+#     samplingServerURL: http://jeager:5778/sampling
+#     localAgentHostPort: jeager:6831

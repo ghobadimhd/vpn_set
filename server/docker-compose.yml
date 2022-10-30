@@ -1,41 +1,53 @@
 version: '3'
 services:
+
+
+  easyrsa:
+    container_name: vpnset-easyrsa
+    build: 
+      context: ./lib
+      dockerfile: ./easyrsa/Dockerfile
+    image: "vpnset-easyrsa:v0.3"
+    env_file: .env
+    volumes:
+      - ./vpn-data/:/etc/vpnset
   openvpn:
     container_name: vpnset-openvpn
-    build: openvpn/
+    build: 
+      context: ./lib
+      dockerfile: ./openvpn/Dockerfile
     image: "vpnset-openvpn:v0.3"
     env_file: .env
     restart: always
     privileged: true
+    depends_on: 
+      - easyrsa
     ports:
-     - "${OVPN_PORT}:1194/udp"
+     - "1194:1194/tcp"
     networks:
       - vpn
     volumes:
       - ./vpn-data/:/etc/vpnset
-
-  nginx:
-    container_name: nginx
-    build: nginx/
-    image: vpnset-nginx
-    env_file: .env
-    restart: always
-    privileged: false
-    ports:
-     - "${OVPN_PORT}:1194/tcp"
-     - "${HTTP_PORT}:443/tcp"
-    networks:
-      - vpn
-    volumes:
-      - ./vpn-data/:/etc/vpnset
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.openvpn.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.openvpn.entrypoints=openvpn"
+      - "traefik.tcp.routers.openvpn.tls=true"
+      - "traefik.tcp.routers.openvpn.service=openvpn"
+      - "traefik.tcp.services.openvpn.loadbalancer.server.address=openvpn"
+      - "traefik.tcp.services.openvpn.loadbalancer.server.port=1194"
 
   ocserv:
-    container_name: ocserv
-    build: ocserv/
-    image: vpnset-ocserv
+    container_name: vpnset-ocserv
+    build: 
+      context: ./lib
+      dockerfile: ./ocserv/Dockerfile
+    image: vpnset-ocserv:v0.3
     env_file: .env
     restart: always
     privileged: true
+    depends_on: 
+      - easyrsa
     ports:
      - "${OCSERV_PORT}:443/tcp"
      - "${OCSERV_PORT}:443/udp"
@@ -43,16 +55,116 @@ services:
       - vpn
     volumes:
       - ./vpn-data/:/etc/vpnset
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.ocserv.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.ocserv.entrypoints=ocserv"
+      - "traefik.tcp.routers.ocserv.tls=true"
+      - "traefik.tcp.routers.ocserv.service=ocserv"
+      - "traefik.tcp.services.ocserv.loadbalancer.server.address=ocserv"
+      - "traefik.tcp.services.ocserv.loadbalancer.server.port=443"
+  nginx:
+    container_name: vpnset-nginx
+    build: 
+      context: ./lib
+      dockerfile: ./nginx/Dockerfile
+    image: vpnset-nginx:v0.3
+    env_file: .env
+    restart: always
+    privileged: false
+    ports:
+     - "${OVPN_PORT}:1194/tcp"
+    #  - "${HTTP_PORT}:443/tcp"
+    networks:
+      - vpn
+    volumes:
+      - ./vpn-data/:/etc/vpnset
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx.rule=PathPrefix(`/exports`)"
+      - "traefik.http.routers.nginx.entrypoints=https"
+      - "traefik.http.routers.nginx.tls=true"
+      - "traefik.http.services.nginx.loadbalancer.server.url=http://nginx/"
+      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+      - "traefik.http.routers.nginx.middlewares=auth@file"
+
 
   ovpnmon:
-    container_name: ovpnmon
+    container_name: vpnset-ovpnmon
     image: ruimarinho/openvpn-monitor
     env_file: .env
     restart: always
     privileged: false
     networks:
       - vpn
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ovpnmon.rule=PathPrefix(`/ovpnmon`)"
+      - "traefik.http.routers.ovpnmon.entrypoints=https"
+      - "traefik.http.routers.ovpnmon.tls=true"
+      - "traefik.http.routers.ovpnmon.service=ovpnmon"
+      - "traefik.http.services.ovpnmon.loadbalancer.server.url=http://ovpnmon/"
+      - "traefik.http.services.ovpnmon.loadbalancer.server.port=80"
+      - "traefik.http.routers.ovpnmon.middlewares=auth@file,stripovpn"
+      # - "traefik.http.middlewares.stripovpn"
+      - "traefik.http.middlewares.stripovpn.stripprefix.prefixes=/ovpnmon"
+  traefik:
+    image: traefik:v2.9
+    container_name: vpnset-traefik
+    command: |
+      --providers.docker
+      --providers.file.filename=/traefik/dynamic_config.yml
+      --configFile=/traefik/static_config.yml
+    depends_on: 
+      - easyrsa
+    ports:
+      - "2441-2449:2441-2449"
+    labels: {}
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik:/traefik
+      - ./vpn-data/:/etc/vpnset
 
+    networks:
+      - vpn
 
+  sockd:
+    image: lozyme/sockd
+    container_name: vpnset-sockd
+    restart: always
+    depends_on: 
+      - easyrsa
+    ports:
+      - 2020
+    volumes:
+      - "${PWD}/vpn-data/danted/sockd.passwd:/home/danted/conf/sockd.passwd"
+      # - sockd.conf:/home/danted/conf/sockd.conf
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.danted.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.danted.entrypoints=danted"
+      - "traefik.tcp.routers.danted.tls=true"
+      - "traefik.tcp.routers.danted.service=danted"
+      - "traefik.tcp.services.danted.loadbalancer.server.address=danted"
+      - "traefik.tcp.services.danted.loadbalancer.server.port=2020"
+
+  coredns:
+    image: coredns/coredns:1.7.0
+    command: -conf /etc/coredns/Corefile
+    container_name: vpnset-coredns
+    restart: always # other option: always - if you want persistent through host reboots
+    volumes:
+        - './coredns:/etc/coredns'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.coredns.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.coredns.entrypoints=coredns"
+      - "traefik.tcp.routers.coredns.tls=true"
+      - "traefik.tcp.routers.coredns.service=coredns"
+      - "traefik.tcp.services.coredns.loadbalancer.server.address=coredns"
+      - "traefik.tcp.services.coredns.loadbalancer.server.port=53"
+    networks:
+      - vpn
 networks:
   vpn:

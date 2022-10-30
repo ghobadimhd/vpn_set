@@ -6,7 +6,7 @@ OPENVPN_CONF_DIR=$VPNSET_DIR/openvpn
 OPENVPN_DATA_DIR=$VPNSET_DIR/openvpn
 OPENVPN_EXPORT_DIR=$OPENVPN_DATA_DIR/export
 
-OVPN_CERT_NAME=ov-server
+CERT_NAME=vpnset-server
 
 EASYRSA_DIR=$VPNSET_DIR/easyrsa
 
@@ -24,7 +24,7 @@ _EOF_
 
 # Create Server Config
 cat << _EOF_ > $OPENVPN_DATA_DIR/openvpn.conf
-management 0.0.0.0 5555
+
 `echo proto $OVPN_PROTOCOL `
 `echo port 1194`
 `cat /openvpn.conf.tpl`
@@ -37,28 +37,12 @@ if ! [ -a $OPENVPN_DATA_DIR ] ; then
     mkdir -p $OPENVPN_DATA_DIR
 fi
 
-# Create export directories
-if ! [ -a $OPENVPN_EXPORT_DIR ] ; then
-    mkdir -p $OPENVPN_EXPORT_DIR
-    chmod o=rx $OPENVPN_EXPORT_DIR
-fi
-for DIR in certs profiles keys ; do
-    if ! [ -a $OPENVPN_EXPORT_DIR/$DIR ] ; then
-        mkdir -p $OPENVPN_EXPORT_DIR/$DIR
-        chmod o=rx $OPENVPN_EXPORT_DIR/$DIR
-    fi
-done
-
-# Create easyrsa CA directory
-ovctl init-pki
-ovctl server-create $OVPN_CERT_NAME
-
 # Create openvpn user
 id openvpn || adduser --home /etc/vpnset/openvpn --shell /usr/sbin/nologin --disabled-login openvpn --system --group
 
-cp $EASYRSA_DIR/pki/issued/$OVPN_CERT_NAME.crt $EASYRSA_DIR/pki/private/$OVPN_CERT_NAME.key $OPENVPN_CONF_DIR/
-chown openvpn:openvpn $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.crt $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.key
-chmod u=rx $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.crt $VPNSET_DIR/openvpn/$OVPN_CERT_NAME.key
+# cp $EASYRSA_DIR/pki/issued/$CERT_NAME.crt $EASYRSA_DIR/pki/private/$CERT_NAME.key $OPENVPN_CONF_DIR/
+chown openvpn:openvpn $VPNSET_DIR/openvpn/$CERT_NAME.crt $VPNSET_DIR/openvpn/$CERT_NAME.key
+# chmod u=rx $VPNSET_DIR/openvpn/$CERT_NAME.crt $VPNSET_DIR/openvpn/$CERT_NAME.key
 
 
 # A iptable MASQUERADE NAT rule
