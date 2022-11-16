@@ -149,6 +149,24 @@ services:
       - "traefik.tcp.services.danted.loadbalancer.server.address=danted"
       - "traefik.tcp.services.danted.loadbalancer.server.port=2020"
 
+  squid:
+    image: ubuntu/squid
+    container_name: vpnset-squid
+    restart: always
+    ports:
+      - 3128
+    volumes:
+      - "${PWD}/squid/squid.conf:/etc/squid/squid.conf"
+      - "${PWD}/squid/passwords:/etc/squid/passwords"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.squid.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.squid.entrypoints=squid"
+      - "traefik.tcp.routers.squid.tls=true"
+      - "traefik.tcp.routers.squid.service=squid"
+      - "traefik.tcp.services.squid.loadbalancer.server.address=squid"
+      - "traefik.tcp.services.squid.loadbalancer.server.port=3128"
+
   coredns:
     image: coredns/coredns:1.7.0
     command: -conf /etc/coredns/Corefile

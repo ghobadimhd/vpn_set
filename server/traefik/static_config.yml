@@ -19,6 +19,8 @@ entryPoints:
     address: ':2444'
   coredns:
     address: ':2445'
+  squid:
+    address: ':2446'
 
 metrics:
   prometheus:
