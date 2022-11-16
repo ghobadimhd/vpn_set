@@ -12,25 +12,25 @@ EASYRSA_DIR=$VPNSET_DIR/easyrsa
 
 export EASYRSA_BATCH=1
 
+# Create Server Config
+if ! [ -a $OPENVPN_DATA_DIR/openvpn.conf ] ; then
+    cp /client.conf.tpl $OPENVPN_DATA_DIR/client.conf.tpl
+fi
+
 # Craete client configuration file
 cat << _EOF_ > /etc/vpnset/openvpn/client.conf
 `cat /client.conf.tpl`
-`echo remote $BRIDGE_ADDRESS`
-`echo proto $OVPN_PROTOCOL `
-`echo port $BRIDGE_OVPN_PORT`
+`echo remote ${BRIDGE_ADDRESS:-localhost}`
+`echo proto ${OVPN_PROTOCOL:-tcp}`
+`echo port ${BRIDGE_OVPN_PORT:-2443}`
 
 _EOF_
 
 
 # Create Server Config
-cat << _EOF_ > $OPENVPN_DATA_DIR/openvpn.conf
-
-`echo proto $OVPN_PROTOCOL `
-`echo port 1194`
-`cat /openvpn.conf.tpl`
-
-_EOF_
-
+if ! [ -a $OPENVPN_DATA_DIR/openvpn.conf ] ; then
+    cp /openvpn.conf.tpl $OPENVPN_DATA_DIR/openvpn.conf
+fi
 
 # Creating base data directoy
 if ! [ -a $OPENVPN_DATA_DIR ] ; then

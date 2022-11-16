@@ -1,14 +1,13 @@
 version: '3'
 services:
 
-
   easyrsa:
     container_name: vpnset-easyrsa
     build: 
       context: ./lib
       dockerfile: ./easyrsa/Dockerfile
     image: "vpnset-easyrsa:v0.3"
-    env_file: .env
+    # env_file: .env
     volumes:
       - ./vpn-data/:/etc/vpnset
   openvpn:
@@ -43,7 +42,7 @@ services:
       context: ./lib
       dockerfile: ./ocserv/Dockerfile
     image: vpnset-ocserv:v0.3
-    env_file: .env
+    # env_file: .env
     restart: always
     privileged: true
     depends_on: 
@@ -69,12 +68,11 @@ services:
       context: ./lib
       dockerfile: ./nginx/Dockerfile
     image: vpnset-nginx:v0.3
-    env_file: .env
+    # env_file: .env
     restart: always
     privileged: false
-    ports:
-     - "${OVPN_PORT}:1194/tcp"
-    #  - "${HTTP_PORT}:443/tcp"
+    # ports:
+    #  - "1194:1194/tcp"
     networks:
       - vpn
     volumes:
@@ -87,7 +85,6 @@ services:
       - "traefik.http.services.nginx.loadbalancer.server.url=http://nginx/"
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
       - "traefik.http.routers.nginx.middlewares=auth@file"
-
 
   ovpnmon:
     container_name: vpnset-ovpnmon
@@ -106,7 +103,6 @@ services:
       - "traefik.http.services.ovpnmon.loadbalancer.server.url=http://ovpnmon/"
       - "traefik.http.services.ovpnmon.loadbalancer.server.port=80"
       - "traefik.http.routers.ovpnmon.middlewares=auth@file,stripovpn"
-      # - "traefik.http.middlewares.stripovpn"
       - "traefik.http.middlewares.stripovpn.stripprefix.prefixes=/ovpnmon"
   traefik:
     image: traefik:v2.9
