@@ -85,7 +85,6 @@ services:
   ovpnmon:
     container_name: vpnset-ovpnmon
     image: ruimarinho/openvpn-monitor
-    env_file: .env
     restart: always
     privileged: false
     networks:
