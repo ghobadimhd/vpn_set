@@ -138,6 +138,8 @@ services:
       - "traefik.tcp.routers.danted.service=danted"
       - "traefik.tcp.services.danted.loadbalancer.server.address=danted"
       - "traefik.tcp.services.danted.loadbalancer.server.port=2020"
+    networks:
+      - vpn
 
   squid:
     image: ubuntu/squid
@@ -156,6 +158,8 @@ services:
       - "traefik.tcp.routers.squid.service=squid"
       - "traefik.tcp.services.squid.loadbalancer.server.address=squid"
       - "traefik.tcp.services.squid.loadbalancer.server.port=3128"
+    networks:
+      - vpn
 
   coredns:
     image: coredns/coredns:1.7.0
