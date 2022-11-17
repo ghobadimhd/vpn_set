@@ -9,7 +9,7 @@ services:
     image: "vpnset-easyrsa:v0.3"
     # env_file: .env
     volumes:
-      - ./vpn-data/:/etc/vpnset
+      - ./data/:/etc/vpnset
   openvpn:
     container_name: vpnset-openvpn
     build: 
@@ -26,7 +26,7 @@ services:
     networks:
       - vpn
     volumes:
-      - ./vpn-data/:/etc/vpnset
+      - ./data/:/etc/vpnset
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.openvpn.rule=HostSNI(`*`)"
@@ -53,7 +53,7 @@ services:
     networks:
       - vpn
     volumes:
-      - ./vpn-data/:/etc/vpnset
+      - ./data/:/etc/vpnset
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.ocserv.rule=HostSNI(`*`)"
@@ -76,7 +76,7 @@ services:
     networks:
       - vpn
     volumes:
-      - ./vpn-data/:/etc/vpnset
+      - ./data/:/etc/vpnset
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.nginx.rule=PathPrefix(`/exports`)"
@@ -120,22 +120,22 @@ services:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik:/traefik
-      - ./vpn-data/:/etc/vpnset
+      - ./data/:/etc/vpnset
 
     networks:
       - vpn
 
-  sockd:
-    image: lozyme/sockd
-    container_name: vpnset-sockd
+  danted:
+    image: vpnset-datend:v0.3
+    build: 
+      context: ./lib
+      dockerfile: ./danted/Dockerfile
+    container_name: vpnset-danted
     restart: always
     depends_on: 
       - easyrsa
-    ports:
-      - 2020
     volumes:
-      - "${PWD}/vpn-data/danted/sockd.passwd:/home/danted/conf/sockd.passwd"
-      # - sockd.conf:/home/danted/conf/sockd.conf
+      - "${PWD}/data/danted/:/data/"
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.danted.rule=HostSNI(`*`)"
