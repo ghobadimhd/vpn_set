@@ -35,12 +35,13 @@ for dirname in openvpn ocserv traefik ; do
     chmod uo=rx $VPNSET_DIR/$dirname/$CERT_NAME.crt $VPNSET_DIR/$dirname/$CERT_NAME.key
 done
 
+[ -a $EASYRSA_DIR/client.conf.tpl ] || cp /client.conf.tpl $EASYRSA_DIR/client.conf.tpl
+
 if ! [ -a $VPNSET_DIR/danted ] ; then
     mkdir $VPNSET_DIR/danted
+    touch $VPNSET_DIR/danted/sockd.passwd
+    ln -s data
 fi
-
-touch $VPNSET_DIR/danted/sockd.passwd
-
 
 if ! [ -a $VPNSET_DIR/traefik/passwd ] ; then 
     # admin:ChangeMeNoWplease

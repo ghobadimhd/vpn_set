@@ -1,3 +1,4 @@
+---
 version: '3'
 services:
 
@@ -7,16 +8,18 @@ services:
       context: ./lib
       dockerfile: ./easyrsa/Dockerfile
     image: "vpnset-easyrsa:v0.3"
-    # env_file: .env
     volumes:
       - ./data/:/etc/vpnset
+    environment:
+      BRIDGE_ADDRESS: BRIDGE_ADDRESS
+      OVPN_PROTOCOL: tcp
+      BRIDGE_OVPN_PORT: 2443
   openvpn:
     container_name: vpnset-openvpn
     build: 
       context: ./lib
       dockerfile: ./openvpn/Dockerfile
     image: "vpnset-openvpn:v0.3"
-    env_file: .env
     restart: always
     privileged: true
     depends_on: 
@@ -42,14 +45,10 @@ services:
       context: ./lib
       dockerfile: ./ocserv/Dockerfile
     image: vpnset-ocserv:v0.3
-    # env_file: .env
     restart: always
     privileged: true
     depends_on: 
       - easyrsa
-    ports:
-     - "${OCSERV_PORT}:443/tcp"
-     - "${OCSERV_PORT}:443/udp"
     networks:
       - vpn
     volumes:
@@ -58,7 +57,7 @@ services:
       - "traefik.enable=true"
       - "traefik.tcp.routers.ocserv.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.ocserv.entrypoints=ocserv"
-      - "traefik.tcp.routers.ocserv.tls=true"
+      - "traefik.tcp.routers.ocserv.tls=false"
       - "traefik.tcp.routers.ocserv.service=ocserv"
       - "traefik.tcp.services.ocserv.loadbalancer.server.address=ocserv"
       - "traefik.tcp.services.ocserv.loadbalancer.server.port=443"
@@ -68,11 +67,8 @@ services:
       context: ./lib
       dockerfile: ./nginx/Dockerfile
     image: vpnset-nginx:v0.3
-    # env_file: .env
     restart: always
     privileged: false
-    # ports:
-    #  - "1194:1194/tcp"
     networks:
       - vpn
     volumes:
@@ -117,7 +113,6 @@ services:
       - "2441-2449:2441-2449"
     labels: {}
     volumes:
-      # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik:/traefik
       - ./data/:/etc/vpnset
@@ -167,7 +162,7 @@ services:
     image: coredns/coredns:1.7.0
     command: -conf /etc/coredns/Corefile
     container_name: vpnset-coredns
-    restart: always # other option: always - if you want persistent through host reboots
+    restart: always
     volumes:
         - './coredns:/etc/coredns'
     labels:

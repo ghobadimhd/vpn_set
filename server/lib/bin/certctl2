@@ -10,7 +10,7 @@ CERTDIR=$EASYRSA_DIR/pki/issued
 OPENVPN_DIR=/etc/vpnset/openvpn
 OPENVPN_DATA_DIR=/etc/vpnset/openvpn
 OCSERV_DIR=/etc/vpnset/ocserv
-OVPN_CLIENTCONF=$OPENVPN_DIR/client.conf
+OVPN_CLIENTCONF=$EASYRSA_DIR/client.conf.tpl
 
 EXPORT_DIR=$VPNSET_DIR/export
 EXPORT_DIR_PROFILES=$EXPORT_DIR/profiles
@@ -18,7 +18,7 @@ EXPORT_DIR_CERTS=$EXPORT_DIR/certs
 EXPORT_DIR_KEYS=$EXPORT_DIR/keys
 
 
-cd $EASYRSA_DIR
+[ -a $EASYRSA_DIR ] && cd $EASYRSA_DIR
 export EASYRSA_BATCH=1
 
 function list() {
@@ -39,10 +39,13 @@ function getprofile() {
         cat << _EOF_
 # Openvpn client config
 `if [ "$OVPN_CLIENTCONF" != "" ] then
-    cat $OVPN_CLIENTCONF`
-else
+    cat $OVPN_CLIENTCONF
+fi`
 
-fi
+
+`echo remote ${BRIDGE_ADDRESS:-localhost}`
+`echo proto ${OVPN_PROTOCOL:-tcp}`
+`echo port ${BRIDGE_OVPN_PORT:-2443}`
 
 # CA server certificate
 <ca>
@@ -254,7 +257,7 @@ function init_pki() {
         mkdir -p $EASYRSA_DIR
         tar xf /EasyRSA-3.1.1.tgz -C $EASYRSA_DIR  --strip-components=1
     fi
-    
+    cd $EASYRSA_DIR
     if ! [ -a pki ] ; then  
         ./easyrsa init-pki ;
         openssl rand 40 > pki/.rnd

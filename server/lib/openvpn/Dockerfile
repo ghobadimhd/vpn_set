@@ -3,7 +3,6 @@ FROM ubuntu:focal
 RUN apt update ; apt install --no-install-recommends -y openvpn less iptables wget ca-certificates ; \
     wget https://github.com/OpenVPN/easy-rsa/releases/download/v3.1.1/EasyRSA-3.1.1.tgz -O /EasyRSA-3.1.1.tgz ;
 COPY openvpn/openvpn.conf /openvpn.conf.tpl
-COPY openvpn/openvpn-client-template.conf /client.conf.tpl
 COPY ./openvpn/bin/ /usr/local/bin/
 COPY ./bin/ /usr/local/bin/
 

@@ -5,6 +5,7 @@ RUN apt update ; apt install --no-install-recommends -y less wget ca-certificate
 
 COPY ./easyrsa/bin/ /usr/local/bin/
 COPY ./bin/ /usr/local/bin/
+COPY easyrsa/openvpn-client-template.conf /client.conf.tpl
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 
